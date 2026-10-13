@@ -33,6 +33,7 @@ type fakeKernel struct {
 	patches   []map[string]any
 	configs   map[string]any
 	failReloa bool
+	failPatch bool          // reject PATCH /configs, the way a real kernel would
 	reloadHup chan struct{} // when non-nil, reload blocks until this closes
 }
 
@@ -60,11 +61,16 @@ func newFakeKernel(t *testing.T) *fakeKernel {
 			var patch map[string]any
 			_ = json.NewDecoder(r.Body).Decode(&patch)
 			k.mu.Lock()
+			fail := k.failPatch
 			k.patches = append(k.patches, patch)
 			for key, v := range patch {
 				k.configs[key] = v
 			}
 			k.mu.Unlock()
+			if fail {
+				http.Error(w, "patch refused", http.StatusBadRequest)
+				return
+			}
 			w.WriteHeader(http.StatusNoContent)
 		case http.MethodPut: // reload
 			var body struct {
@@ -168,6 +174,26 @@ func (k *fakeKernel) lastPatch() map[string]any {
 		return nil
 	}
 	return k.patches[len(k.patches)-1]
+}
+
+// rejectPatches makes every PATCH /configs fail, so a test can check that only
+// what the kernel accepted is treated as applied.
+func (k *fakeKernel) rejectPatches() {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.failPatch = true
+}
+
+// configKeys reports the kernel's current /configs view, for checking that a
+// proxied patch arrived and what it carried.
+func (k *fakeKernel) configKeys() map[string]any {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	out := map[string]any{}
+	for key, v := range k.configs {
+		out[key] = v
+	}
+	return out
 }
 
 // blockReloads makes every reload hang until the returned func is called, so a

@@ -106,6 +106,11 @@ type UIPrefs struct {
 	Mode      string `yaml:"mode" json:"mode"`
 	LogLevel  string `yaml:"log-level" json:"log-level"`
 	TunEnable bool   `yaml:"tun-enable" json:"tun-enable"`
+	TunStack  string `yaml:"tun-stack" json:"tun-stack"`
+	// AllowLan is a pointer so "never touched" stays distinct from false: the
+	// overlay must not force a value the panel never chose, or override.yaml's
+	// allow-lan would be pinned to the zero value on the first apply.
+	AllowLan *bool `yaml:"allow-lan,omitempty" json:"allow-lan,omitempty"`
 }
 
 // settingsFile is the on-disk ui/settings.yaml layout.
@@ -113,6 +118,8 @@ type settingsFile struct {
 	Mode      string   `yaml:"mode"`
 	LogLevel  string   `yaml:"log-level"`
 	TunEnable bool     `yaml:"tun-enable"`
+	TunStack  string   `yaml:"tun-stack"`
+	AllowLan  *bool    `yaml:"allow-lan,omitempty"`
 	ConfigID  string   `yaml:"configId"`
 	Configs   []Config `yaml:"configs"`
 
@@ -211,6 +218,8 @@ func (s *Store) applyFile(df settingsFile, defaults UIPrefs) {
 		Mode:      df.Mode,
 		LogLevel:  df.LogLevel,
 		TunEnable: df.TunEnable,
+		TunStack:  df.TunStack,
+		AllowLan:  df.AllowLan,
 	}
 	if s.prefs.Mode == "" {
 		s.prefs.Mode = defaults.Mode
@@ -266,6 +275,8 @@ func (s *Store) saveLocked() error {
 		Mode:      s.prefs.Mode,
 		LogLevel:  s.prefs.LogLevel,
 		TunEnable: s.prefs.TunEnable,
+		TunStack:  s.prefs.TunStack,
+		AllowLan:  s.prefs.AllowLan,
 		ConfigID:  s.configID,
 		Configs:   s.configs,
 	}
@@ -317,6 +328,24 @@ func (s *Store) SetTunEnable(enable bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.prefs.TunEnable = enable
+	return s.saveLocked()
+}
+
+// SetTunStack records the TUN stack the panel picked. Empty is a valid value:
+// it means the stack comes from override.yaml / the subscription, and the next
+// apply must not force one back in.
+func (s *Store) SetTunStack(stack string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.prefs.TunStack = stack
+	return s.saveLocked()
+}
+
+// SetAllowLan records the panel's allow-lan switch.
+func (s *Store) SetAllowLan(enable bool) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.prefs.AllowLan = &enable
 	return s.saveLocked()
 }
 

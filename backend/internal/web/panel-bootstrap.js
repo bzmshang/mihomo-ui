@@ -49,15 +49,37 @@
       // Upgrading the kernel in place would replace the child process this panel
       // supervises and manages config.yaml for, so the button is not offered.
       disableUpgradeCore: true,
-      // Likewise TUN: this panel forces tun.enable from its own settings on every
-      // apply, so a switch here would appear to work and then silently revert.
-      disableTunMode: true,
+      // disableTunMode is deliberately left off: the TUN switch is how this panel
+      // turns the tunnel on, and the proxy mirrors that patch into settings.yaml
+      // so it survives the next apply.
     }
     try {
       localStorage.setItem('setup/api-list', JSON.stringify([backend]))
       localStorage.setItem('setup/active-uuid', BACKEND_ID)
     } catch (e) {
       /* nothing else to do: zashboard falls back to its setup page */
+    }
+  }
+
+  // seedPanelSettings hides panel rows this deployment does not expose.
+  //
+  // zashboard persists per-row visibility in a map it reads at startup, so the
+  // seed has to be the first writer or an existing panel would keep whatever it
+  // remembered, and every later load has to see the same map or the customization
+  // dialog would offer to switch a row back on.
+  //
+  // The ports grid is hidden because this panel does not offer port editing:
+  // every row there writes a top-level key straight to the running kernel, and
+  // the next apply merges override.yaml and the subscription back over it, so an
+  // edit would look applied and then quietly revert.
+  var SETTINGS_KEY = 'config/hidden-settings-items'
+  var HIDDEN_SETTINGS = { 'backendSettings.ports': true }
+
+  function seedPanelSettings() {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(HIDDEN_SETTINGS))
+    } catch (e) {
+      /* the row stays visible; the apply above still wins */
     }
   }
 
@@ -183,6 +205,7 @@
   // empty token is correct, and the check below decides whether to cover the
   // app with the login form.
   seedBackend(token)
+  seedPanelSettings()
 
   fetch('/api/auth/check', {
     headers: token ? { Authorization: 'Bearer ' + token } : {},

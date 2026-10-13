@@ -26,6 +26,25 @@ func (s *Server) patchKernel(w http.ResponseWriter, r *http.Request, patch map[s
 	return true
 }
 
+// validMode / validLogLevel are the two value sets mihomo accepts, shared with
+// the proxied-patch path so the panel cannot persist something the kernel would
+// have to reject.
+func validMode(mode string) bool {
+	switch mode {
+	case "rule", "global", "direct":
+		return true
+	}
+	return false
+}
+
+func validLogLevel(level string) bool {
+	switch level {
+	case "debug", "info", "warning", "error", "silent":
+		return true
+	}
+	return false
+}
+
 func (s *Server) handleMode(w http.ResponseWriter, r *http.Request) {
 	if !isWriteMethod(r) {
 		writeErr(w, 405, errMethod)
@@ -39,7 +58,7 @@ func (s *Server) handleMode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	mode := strings.ToLower(strings.TrimSpace(body.Mode))
-	if mode != "rule" && mode != "global" && mode != "direct" {
+	if !validMode(mode) {
 		writeJSON(w, 400, map[string]string{"error": "mode must be rule|global|direct"})
 		return
 	}
@@ -63,9 +82,7 @@ func (s *Server) handleLogLevel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	level := strings.ToLower(strings.TrimSpace(body.Level))
-	switch level {
-	case "debug", "info", "warning", "error", "silent":
-	default:
+	if !validLogLevel(level) {
 		writeJSON(w, 400, map[string]string{"error": "level must be debug|info|warning|error|silent"})
 		return
 	}

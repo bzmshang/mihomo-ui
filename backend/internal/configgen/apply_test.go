@@ -136,6 +136,56 @@ allow-lan: false
 	}
 }
 
+// tun.enable is the one switch the panel owns outright, so the overlay always
+// writes it — that is what makes TUN off the product default even when the
+// subscription enables it. tun.stack and allow-lan are different: unset means
+// the panel never touched them, so override.yaml keeps deciding, which is what
+// lets an operator pin the stack or allow-lan in the baseline.
+func TestUIOverlayForcesTunEnableAndOnlyPanelSetSwitches(t *testing.T) {
+	base := func() map[string]any {
+		return map[string]any{
+			"tun":       map[string]any{"enable": false, "stack": "system", "device": "mihomo"},
+			"allow-lan": true,
+		}
+	}
+
+	untouched := configgen.UIState{TunEnable: true}
+	root := base()
+	untouched.Overlay(root)
+	tun, _ := root["tun"].(map[string]any)
+	if tun["stack"] != "system" {
+		t.Fatalf("unset tun stack: got %v, want the override's system", tun["stack"])
+	}
+	if tun["device"] != "mihomo" {
+		t.Fatalf("overlay dropped another tun key: %v", tun)
+	}
+	if tun["enable"] != true {
+		t.Fatalf("tun.enable = %v, want the panel's true", tun["enable"])
+	}
+	if root["allow-lan"] != true {
+		t.Fatalf("unset allow-lan: got %v, want the override's true", root["allow-lan"])
+	}
+
+	set := configgen.UIState{TunEnable: false, TunStack: "gvisor", AllowLan: false, AllowLanSet: true}
+	root = base()
+	set.Overlay(root)
+	tun, _ = root["tun"].(map[string]any)
+	if tun["stack"] != "gvisor" {
+		t.Fatalf("tun stack = %v, want the panel's gvisor", tun["stack"])
+	}
+	if root["allow-lan"] != false {
+		t.Fatalf("allow-lan = %v, want the panel's false", root["allow-lan"])
+	}
+
+	// No tun block at all: the overlay creates one, since a switch was flipped.
+	empty := map[string]any{}
+	configgen.UIState{TunEnable: true}.Overlay(empty)
+	tun, _ = empty["tun"].(map[string]any)
+	if tun == nil || tun["enable"] != true {
+		t.Fatalf("tun = %v, want a created block with enable", tun)
+	}
+}
+
 // The proxy port is no longer owned by an env var: mixed-port passes through
 // from the subscription when override.yaml does not set one, and override wins
 // when it does. (v1.x forced it from PROXY_LISTEN and deleted it when unset;
