@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/xin/mihomo-ui/internal/configgen"
-	"github.com/xin/mihomo-ui/internal/configsvc"
-	"github.com/xin/mihomo-ui/internal/store"
+	"github.com/bzmshang/mihomo-ui/internal/configgen"
+	"github.com/bzmshang/mihomo-ui/internal/configsvc"
+	"github.com/bzmshang/mihomo-ui/internal/store"
 )
 
 // defaultSource infers where a config comes from when the client did not say.

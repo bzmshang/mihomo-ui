@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/xin/mihomo-ui/internal/configgen"
-	"github.com/xin/mihomo-ui/internal/store"
+	"github.com/bzmshang/mihomo-ui/internal/configgen"
+	"github.com/bzmshang/mihomo-ui/internal/store"
 )
 
 // errMethod is the body every handler returns for a verb it does not implement.

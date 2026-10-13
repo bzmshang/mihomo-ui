@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xin/mihomo-ui/internal/configgen"
-	"github.com/xin/mihomo-ui/internal/store"
+	"github.com/bzmshang/mihomo-ui/internal/configgen"
+	"github.com/bzmshang/mihomo-ui/internal/store"
 )
 
 // reloadTimeout bounds a hot-reload; not the request context, since the file is

@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/xin/mihomo-ui/internal/configgen"
-	"github.com/xin/mihomo-ui/internal/store"
+	"github.com/bzmshang/mihomo-ui/internal/configgen"
+	"github.com/bzmshang/mihomo-ui/internal/store"
 	"gopkg.in/yaml.v3"
 )
 

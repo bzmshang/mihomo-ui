@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/xin/mihomo-ui/internal/configgen"
+	"github.com/bzmshang/mihomo-ui/internal/configgen"
 )
 
 // patchKernel pushes a setting to mihomo, saves it as a pref, then mirrors it

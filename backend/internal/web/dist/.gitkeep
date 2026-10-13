@@ -1,3 +1,3 @@
 Placeholder so //go:embed has a directory to find in a fresh checkout.
-Run `npm run build` in frontend/ and copy dist/ here before `go build`;
-the Dockerfile does this automatically.
+Run scripts/fetch-zashboard.sh (or scripts/fetch-zashboard.ps1) to fill this
+directory with the panel before `go build`; the Dockerfile does it automatically.

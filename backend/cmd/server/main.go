@@ -16,11 +16,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/xin/mihomo-ui/internal/api"
-	"github.com/xin/mihomo-ui/internal/configgen"
-	"github.com/xin/mihomo-ui/internal/configsvc"
-	"github.com/xin/mihomo-ui/internal/mihomo"
-	"github.com/xin/mihomo-ui/internal/store"
+	"github.com/bzmshang/mihomo-ui/internal/api"
+	"github.com/bzmshang/mihomo-ui/internal/configgen"
+	"github.com/bzmshang/mihomo-ui/internal/configsvc"
+	"github.com/bzmshang/mihomo-ui/internal/mihomo"
+	"github.com/bzmshang/mihomo-ui/internal/store"
 )
 
 // newKernelSecret mints the credential the panel uses to talk to its own
@@ -81,7 +81,7 @@ var renamedEnv = map[string]string{
 	"MIHOMO_LISTEN": "renamed to MIHOMO_API",
 	"PROXY_LISTEN":  "removed; the proxy port (mixed-port) now comes from override.yaml or the subscription",
 	"MIHOMO_PROXY":  "removed; set HTTP_PROXY/HTTPS_PROXY to proxy subscription downloads",
-	"STATIC_DIR":    "removed; the frontend is compiled into the binary",
+	"STATIC_DIR":    "removed; the panel is compiled into the binary",
 }
 
 func rejectRenamedEnv() {
@@ -221,6 +221,10 @@ func main() {
 		Store:      cfgStore,
 		ConfigPath: configPath,
 		ConfigDir:  configDir,
+		// The panel proxies browser calls to the kernel, so it needs both ends of
+		// that hop: where the kernel listens, and the per-boot secret to present.
+		KernelAPI:    mihomoAPI,
+		KernelSecret: secret,
 		Config: &configsvc.Service{
 			ConfigPath:   configPath,
 			OverridePath: overridePath,

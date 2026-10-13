@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xin/mihomo-ui/internal/configsvc"
-	"github.com/xin/mihomo-ui/internal/store"
+	"github.com/bzmshang/mihomo-ui/internal/configsvc"
+	"github.com/bzmshang/mihomo-ui/internal/store"
 )
 
 // Activate must flip the store flag and install in one step. If it can be

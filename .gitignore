@@ -1,8 +1,6 @@
 data/
 .env
-frontend/node_modules/
-frontend/dist/
-# built frontend, copied in before `go build` embeds it
+# fetched panel (zashboard build), embedded into the binary by go:embed
 backend/internal/web/dist/*
 !backend/internal/web/dist/.gitkeep
 backend/mihomo-ui

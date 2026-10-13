@@ -1,10 +1,9 @@
-# build frontend
-FROM node:22-alpine AS web
+# fetch the panel (zashboard) that the binary embeds
+FROM alpine:3.20 AS panel
+RUN apk add --no-cache bash curl unzip coreutils
 WORKDIR /src
-COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm install
-COPY frontend/ .
-RUN npm run build
+COPY scripts/fetch-zashboard.sh scripts/
+RUN bash scripts/fetch-zashboard.sh
 
 # build control plane
 FROM golang:1.22-alpine AS api
@@ -12,8 +11,8 @@ WORKDIR /src
 COPY backend/go.mod backend/go.sum* ./
 RUN go mod download
 COPY backend/ .
-# The frontend is embedded into the binary, so it must be in place first.
-COPY --from=web /src/dist ./internal/web/dist
+# The panel is embedded into the binary, so it must be in place first.
+COPY --from=panel /src/backend/internal/web/dist ./internal/web/dist
 RUN CGO_ENABLED=0 go build -o /out/mihomo-ui ./cmd/server
 
 # final: official mihomo + UI (single process: mihomo-ui starts mihomo)

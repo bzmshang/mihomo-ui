@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xin/mihomo-ui/internal/mihomo"
+	"github.com/bzmshang/mihomo-ui/internal/mihomo"
 )
 
 // fakeBin writes a shell script that behaves like a kernel for the bits Kernel

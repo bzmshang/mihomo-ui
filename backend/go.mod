@@ -1,4 +1,4 @@
-module github.com/xin/mihomo-ui
+module github.com/bzmshang/mihomo-ui
 
 go 1.22
 

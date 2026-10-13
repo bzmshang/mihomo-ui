@@ -15,11 +15,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xin/mihomo-ui/internal/api"
-	"github.com/xin/mihomo-ui/internal/configgen"
-	"github.com/xin/mihomo-ui/internal/configsvc"
-	"github.com/xin/mihomo-ui/internal/mihomo"
-	"github.com/xin/mihomo-ui/internal/store"
+	"github.com/bzmshang/mihomo-ui/internal/api"
+	"github.com/bzmshang/mihomo-ui/internal/configgen"
+	"github.com/bzmshang/mihomo-ui/internal/configsvc"
+	"github.com/bzmshang/mihomo-ui/internal/mihomo"
+	"github.com/bzmshang/mihomo-ui/internal/store"
 	"gopkg.in/yaml.v3"
 )
 
@@ -135,6 +135,20 @@ func newFakeKernel(t *testing.T) *fakeKernel {
 	mux.HandleFunc("/providers/proxies", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]any{"providers": map[string]any{}})
 	})
+	// echo reports what the kernel received, so a test can prove the browser's
+	// token never reaches it and the injected secret does. Registered for the
+	// subtree too, to catch a mount point left on an encoded path.
+	echo := func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, map[string]any{
+			"path":   r.URL.Path,
+			"query":  r.URL.RawQuery,
+			"auth":   r.Header.Get("Authorization"),
+			"host":   r.Host,
+			"method": r.Method,
+		})
+	}
+	mux.HandleFunc("/echo", echo)
+	mux.HandleFunc("/echo/", echo)
 
 	k.Server = httptest.NewServer(mux)
 	t.Cleanup(k.Close)
@@ -219,6 +233,7 @@ func newEnv(t *testing.T) *env {
 	k := newFakeKernel(t)
 	client := mihomo.NewClient(k.URL, "test-secret")
 	configPath := filepath.Join(mihomoDir, "config.yaml")
+	kernelAPI := strings.TrimPrefix(k.URL, "http://")
 
 	svc := &configsvc.Service{
 		ConfigPath:   configPath,
@@ -236,6 +251,10 @@ func newEnv(t *testing.T) *env {
 		ConfigPath: configPath,
 		ConfigDir:  configDir,
 		Config:     svc,
+		// The panel proxies browser calls to the kernel at /clash, presenting the
+		// kernel secret on the way; tests exercise that hop against the fake kernel.
+		KernelAPI:    kernelAPI,
+		KernelSecret: "test-secret",
 	}
 	ts := httptest.NewServer(srv.Routes())
 	t.Cleanup(ts.Close)
